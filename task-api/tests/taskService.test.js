@@ -205,3 +205,70 @@ describe("Task Service - stats", () => {
     expect(stats.done).toBe(1);
   });
 });
+
+describe("Task Service - additional branch coverage", () => {
+  beforeEach(() => {
+    taskService._reset();
+  });
+
+  test("should ignore unknown status in stats", () => {
+    taskService.create({
+      title: "Unknown status task",
+      status: "something_else",
+    });
+
+    const stats = taskService.getStats();
+
+    expect(stats.todo).toBe(0);
+    expect(stats.in_progress).toBe(0);
+    expect(stats.done).toBe(0);
+    expect(stats.overdue).toBe(0);
+  });
+
+  test("should count overdue incomplete tasks", () => {
+    taskService.create({
+      title: "Overdue task",
+      dueDate: "2020-01-01T00:00:00.000Z",
+      status: "todo",
+    });
+
+    const stats = taskService.getStats();
+
+    expect(stats.overdue).toBe(1);
+  });
+
+  test("should not count completed overdue tasks", () => {
+    taskService.create({
+      title: "Completed overdue task",
+      dueDate: "2020-01-01T00:00:00.000Z",
+      status: "done",
+    });
+
+    const stats = taskService.getStats();
+
+    expect(stats.overdue).toBe(0);
+  });
+
+  test("should return null when updating non-existing task", () => {
+    const result = taskService.update("non-existing-id", {
+      title: "Updated",
+    });
+
+    expect(result).toBeNull();
+  });
+
+  test("should return false when removing non-existing task", () => {
+    const result = taskService.remove("non-existing-id");
+
+    expect(result).toBe(false);
+  });
+
+  test("should return null when assigning non-existing task", () => {
+    const result = taskService.assignTask(
+      "non-existing-id",
+      "Saurabh"
+    );
+
+    expect(result).toBeNull();
+  });
+});

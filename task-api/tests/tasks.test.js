@@ -231,3 +231,51 @@ describe("GET /tasks/stats", () => {
     expect(response.body).toHaveProperty("overdue");
   });
 });
+
+describe("PATCH /tasks/:id/assign", () => {
+  test("should assign a task to a user", async () => {
+    const created = await request(app)
+      .post("/tasks")
+      .send({
+        title: "Assign me",
+      });
+
+    const response = await request(app)
+      .patch(`/tasks/${created.body.id}/assign`)
+      .send({
+        assignee: "Saurabh",
+      });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.assignee).toBe("Saurabh");
+    expect(response.body.title).toBe("Assign me");
+  });
+
+  test("should return 404 for non-existing task", async () => {
+    const response = await request(app)
+      .patch("/tasks/non-existing-id/assign")
+      .send({
+        assignee: "Saurabh",
+      });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.body.error).toBe("Task not found");
+  });
+
+  test("should reject empty assignee", async () => {
+    const created = await request(app)
+      .post("/tasks")
+      .send({
+        title: "Assignment validation",
+      });
+
+    const response = await request(app)
+      .patch(`/tasks/${created.body.id}/assign`)
+      .send({
+        assignee: "",
+      });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body).toHaveProperty("error");
+  });
+});
